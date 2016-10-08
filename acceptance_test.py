@@ -9,28 +9,38 @@ username = "my_use$"
 
 filename = "1kHzseg.wav"
 
-num_filenaes = 10
+num_filenames = 10
 
 filenames = [
-"0001.wav",
-"0002.wav",
-"0003.wav",
+#"0001.wav",
+#"0002.wav",
+#"0003.wav",
 "0004.wav",
 "0005.wav",
 "0006.wav",
 "0007.wav",
 "0008.wav",
 "0009.wav",
-"0010.wav"
+"0010.wav",
+"0011.wav",
+"0012.wav",
+"0013.wav",
+"0014.wav",
+"0015.wav",
+"0016.wav",
+"0017.wav",
+"0018.wav",
+"0019.wav",
+"0020.wav",
+"0021.wav",
+"0022.wav",
+"0023.wav"
 ]
-
-# class serial.Serial
-# __init__(port=None, baudrate=9600
 
 print ('welcome to Wake acceptance testing: show me potato salad...')
 
 try:
-    d = serial.Serial("COM44", baudrate=9600, timeout=3)
+    d = serial.Serial("COM3", baudrate=9600, timeout=3)
     print ('connected, entering WiFi credentials')
 except:
     print ('serial connect FAIL - BAD')
@@ -52,10 +62,10 @@ time.sleep(0.5)
 d.write("rick_james_bitch!\r\n".encode())
 print ('Wake should now connect to WiFi...wait for status LED to breath cyan...')
 d.close()
-ut = raw_input("Press enter to program Wake...")
+ut = input("Press enter to program Wake...")
 
 try:
-    e = serial.Serial("COM44", baudrate=14400)
+    e = serial.Serial("COM3", baudrate=14400)
 except:
     print ('Went into DFU Mode -- Good!')
 
@@ -72,10 +82,10 @@ time.sleep(1);
 #
 subprocess.call(["dfu-util", "-d", "2b04:d008", "-a", "0", "-s", "0x80A0000:leave", "-D", "unitTestLocal.bin"])
 
-p = raw_input('Once Wake Unit has connected to WiFi...Press ENTER...')
+p = input('Once Wake Unit has connected to WiFi...Press ENTER...')
 
 try:
-    s = serial.Serial("COM44", baudrate=9600, timeout=20)
+    s = serial.Serial("COM3", baudrate=9600, timeout=20)
     print ('Serial connection Good!')
 except:
 	print ('Serial Connection FAIL - BAD')
@@ -92,7 +102,7 @@ if(line == "Can't access SD card. Do not reformat."):
 else:
     print ('received data from Wake Unit: %s\n\r' % line)
 
-lt = raw_input("Enter last digits of IP Address: ")
+lt = input("Enter last digits of IP Address: ")
 
 ipaddr = "192.168.1." + lt
 
@@ -103,8 +113,9 @@ ftp = ftplib.FTP(ipaddr, username, passw, "account", 40)
 #ftp.login(username, passw)
 ftp.set_debuglevel(2)
 
-for i in num_filenaes:
-    ftp.storbinary("STOR " + filenames[i], open(filenames[i], 'rb'))
+#for files in num_filenames:
+for files in range(len(filenames)):
+    ftp.storbinary("STOR " + filenames[files], open(filenames[files], 'rb'))
 
 #ftp.storbinary("STOR " + filename, open(filename, 'rb'))
 
@@ -113,10 +124,12 @@ while  s.in_waiting == 0:
 print ('received data from Wake Unit: %s\n\r' % s.readline())
 
 ftp.quit()
+# flush serial input buffer
+s.flushInput()
 
 print('plug in 9V power to Wake now...\n\r')
 
-lt = raw_input("Press ENTER was Wake is plugged in to 9V power...")
+lt = input("Press ENTER was Wake is plugged in to 9V power...")
 
 # send command to beging unit test
 s.write('t'.encode())
