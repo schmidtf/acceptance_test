@@ -1,20 +1,18 @@
 
 import subprocess
 import serial
-passw  = "34FG98@S5^7#"
 import ftplib
 import time
+import sys
 
 username = "my_use$"
+passw  = "34FG98@S5^7#"
 
 filename = "1kHzseg.wav"
 
 num_filenames = 10
 
 filenames = [
-#"0001.wav",
-#"0002.wav",
-#"0003.wav",
 "0004.wav",
 "0005.wav",
 "0006.wav",
@@ -37,150 +35,180 @@ filenames = [
 "0023.wav"
 ]
 
-print ('welcome to Wake acceptance testing: show me potato salad...')
+filenames_short = [
+"0004.wav",
+"0005.wav",
+"0006.wav",
+"0007.wav",
+"0008.wav",
+"0009.wav",
+"0012.wav",
+"0013.wav",
+"0014.wav",
+"0015.wav",
+"0016.wav",
+"0018.wav",
+"0020.wav",
+"0022.wav"
+]
 
-try:
-    d = serial.Serial("COM3", baudrate=9600, timeout=3)
-    print ('connected, entering WiFi credentials')
-except:
-    print ('serial connect FAIL - BAD')
-    sys.exit()
+def connectLuceraWifi():
+    input('Ensure file "devs.txt" is closed -- Please press enter once "devs.text" is closed\n\r')
 
-d.write("i".encode())
-print ('dev ID: %s\n\r' % d.readline())
-d.write("w".encode())
-#while(d.readline() != "SSID "):
-#    pass
-time.sleep(0.5)
-#print 'readline: %s\n\r' % d.readline()
-d.write("LuceraLabs\r\n")
-time.sleep(0.5)
-#print 'readline: %s\n\r' % d.readline()
-d.write("3\r\n")
-time.sleep(0.5)
-#print 'readline: %s\n\r' % d.readline()
-d.write("rick_james_bitch!\r\n".encode())
-print ('Wake should now connect to WiFi...wait for status LED to breath cyan...')
-d.close()
-ut = input("Press enter to program Wake...")
+    try:
+        d = serial.Serial(comport, baudrate=9600, timeout=3)
+        print ('connected, entering WiFi credentials\n\r')
+    except:
+        print ('serial connect FAIL - BAD')
+        sys.exit()
 
-try:
-    e = serial.Serial("COM3", baudrate=14400)
-except:
-    print ('Went into DFU Mode -- Good!')
+    d.write("i".encode())
+    devID = d.readline()
+    print ('dev ID: %s' % devID)
 
-time.sleep(2);
+    text_file = open("devs.txt", "w")
+    text_file.write("ID: %s" % devID)
+    text_file.close()
 
-#dfu-util -d 2b04:d008 -a 0 -s 0x8020000 -D system-part1.bin
+    input('open file devs.txt and record Wake Device ID into spreadsheet -- Please press Enter when done\n\r')
 
-subprocess.call(["dfu-util", "-d", "2b04:d008", "-a", "0", "-s", "0x8020000", "-D", "system-part1.bin"])
+    d.write("w".encode())
+    #while(d.readline() != "SSID "):
+    #    pass
+    time.sleep(0.5)
+    #print 'readline: %s\n\r' % d.readline()
+    d.write("LuceraLabs\r\n".encode())
+    time.sleep(0.5)
+    #print 'readline: %s\n\r' % d.readline()
+    d.write("3\r\n".encode())
+    time.sleep(0.5)
+    #print 'readline: %s\n\r' % d.readline()
+    d.write("rick_james_bitch!\r\n".encode())
+    print ('Wake should now connect to WiFi...wait for status LED to breath cyan...\n\r')
+    print ('if the status LED continues to blink green or blink cyan, hold CTRL, then press c, then put Wake Unit in the "Bad Wifi" bin')
+    d.close()
 
-time.sleep(1);
-#
-subprocess.call(["dfu-util", "-d", "2b04:d008", "-a", "0", "-s", "0x8060000", "-D", "system-part2.bin"])
-time.sleep(1);
-#
-subprocess.call(["dfu-util", "-d", "2b04:d008", "-a", "0", "-s", "0x80A0000:leave", "-D", "unitTestLocal.bin"])
+def programFirmwareDFU():
+    input("Press ENTER to program Wake unit with firmware...\n\r")
+    try:
+        e = serial.Serial(comport, baudrate=14400)
+    except:
+        print ('Wake unit status LED should blink yellow (DFU Mode)...\n\r')
 
-p = input('Once Wake Unit has connected to WiFi...Press ENTER...')
+    time.sleep(2);
 
-try:
-    s = serial.Serial("COM3", baudrate=9600, timeout=20)
-    print ('Serial connection Good!')
-except:
-	print ('Serial Connection FAIL - BAD')
+    #dfu-util -d 2b04:d008 -a 0 -s 0x8020000 -D system-part1.bin
 
-print('starting Wake FTP server for file transfer to SD card')
+    subprocess.call(["dfu-util", "-d", "2b04:d008", "-a", "0", "-s", "0x8020000", "-D", "system-part1.bin"])
 
-s.write('6'.encode())
-while  s.in_waiting == 0:
-    pass
-line = s.readline()
-if(line == "Can't access SD card. Do not reformat."):
-    print("SD CARD BAD - FAIL")
-    sys.exit()
-else:
-    print ('received data from Wake Unit: %s\n\r' % line)
+    time.sleep(1);
+    #
+    subprocess.call(["dfu-util", "-d", "2b04:d008", "-a", "0", "-s", "0x8060000", "-D", "system-part2.bin"])
+    time.sleep(1);
+    #
+    subprocess.call(["dfu-util", "-d", "2b04:d008", "-a", "0", "-s", "0x80A0000:leave", "-D", "unitTestLocal.bin"])
 
-lt = input("Enter last digits of IP Address: ")
+def uploadWAV_FTP():
 
-ipaddr = "192.168.1." + lt
+    p = input('\n\rOnce the Wake Unit status LED is breathing cyan (connected to WiFi + Particle Clout), Press ENTER to upload WAV files...')
 
-print ('writing WAV file to Wake SD card via FTP')
+    try:
+        s = serial.Serial(comport, baudrate=9600, timeout=20)
+        print ('Serial connection Good!')
+    except:
+        print ('Serial Connection FAIL - BAD')
+        sys.exit()
 
-#class ftplib.FTP(host='', user='', passwd='', acct='', timeout=None, source_address=None)
-ftp = ftplib.FTP(ipaddr, username, passw, "account", 40)
-#ftp.login(username, passw)
-ftp.set_debuglevel(2)
+    print('starting Wake FTP server for file transfer to SD card\n\r')
 
-#for files in num_filenames:
-for files in range(len(filenames)):
-    ftp.storbinary("STOR " + filenames[files], open(filenames[files], 'rb'))
-
-#ftp.storbinary("STOR " + filename, open(filename, 'rb'))
-
-while  s.in_waiting == 0:
-    pass
-print ('received data from Wake Unit: %s\n\r' % s.readline())
-
-ftp.quit()
-# flush serial input buffer
-s.flushInput()
-
-print('plug in 9V power to Wake now...\n\r')
-
-lt = input("Press ENTER was Wake is plugged in to 9V power...")
-
-# send command to beging unit test
-s.write('t'.encode())
-
-data = ""
-
-while (data != "Unit Test Complete\r\n"):
+    s.write('6'.encode())
     while  s.in_waiting == 0:
         pass
-    # convert to ascii string for comparison
-    data = str(s.readline(),'ascii')
-    print ('received data from Wake Unit: %s\n\r' % data)
+    line = s.readline()
+    if(line == "Can't access SD card. Do not reformat."):
+        print("SD CARD BAD - FAIL\n\r")
+        sys.exit()
+    else:
+        print ('received data from Wake Unit: %s\n\r' % line)
 
+    lt = input("Enter the number(s) after the last period of the of IP Address: ")
 
+    ipaddr = "192.168.1." + lt
 
-# # expected message: Unit Test begin: scan for target...
-# print ('received data from Wake Unit: %s\n\r' % s.readline())
-#
-# #expected message: found target - targetStepLocation: XY
-# while  s.in_waiting == 0:
-#     pass
-# print ('received data from Wake Unit: %s\n\r' % s.readline())
-#
-# # expected message: File open success, playing WAV file
-# while  s.in_waiting == 0:
-#     pass
-# print ('received data from Wake Unit: %s\n\r' % s.readline())
-#
-# # wait for wav file play complete
-# while  s.in_waiting == 0:
-#     pass
-# print ('received data from Wake Unit: %s\n\r' % s.readline())
-#
-# # wait for wav file play complete
-# while  s.in_waiting == 0:
-#     pass
-# print ('received data from Wake Unit: %s\n\r' % s.readline())
+    print ('writing WAV file to Wake SD card via FTP\n\r')
 
+    #class ftplib.FTP(host='', user='', passwd='', acct='', timeout=None, source_address=None)
+    ftp = ftplib.FTP(ipaddr, username, passw, "account", 40)
+    #ftp.login(username, passw)
+    ftp.set_debuglevel(2)
 
-#
-# print "hello\n\r"
-# available = []
-# for i in range(50):
-# 	try:
-# 		s = serial.Serial(i)
-# 		print 'Connection successful on COM'+str(i+1)
-# 		available.append('COM'+str(i+1))
-# 		s.close()
-# 	except:
-# 		print 'Connection fail on COM'+str(i+1)
-# 		pass
-# print available
-# for q in available:
-# 	print '%s is available\n\r' % q
+    #for files in num_filenames:
+    for files in range(len(filenames_short)):
+        ftp.storbinary("STOR " + filenames_short[files], open(filenames_short[files], 'rb'))
+        print ('\n\rUploaded file: %s\n\r' % filenames_short[files])
+
+    #ftp.storbinary("STOR " + filename, open(filename, 'rb'))
+
+    while  s.in_waiting == 0:
+        pass
+    print ('received data from Wake Unit: %s\n\r' % s.readline())
+
+    ftp.quit()
+    # flush serial input buffer
+    s.flushInput()
+    s.close()
+
+    print('Finished uploading WAV files to Wake Unit\n\r')
+
+def unitTest():
+    try:
+        s = serial.Serial(comport, baudrate=9600, timeout=20)
+        print ('Serial connection Good!\n\r')
+    except:
+        print ('Serial Connection FAIL - BAD')
+        sys.exit()
+    print('plug in 9V power plug to Wake Unit...\n\r')
+
+    lt = input("Once Wake Unit is plugged in to 9V power, press ENTER\n\r")
+
+    # send command to beging unit test
+    s.write('t'.encode())
+
+    data = ""
+
+    while (data != "Unit Test Complete\r\n"):
+        while  s.in_waiting == 0:
+            pass
+        # convert to ascii string for comparison
+        data = str(s.readline(),'ascii')
+        print ('received data from Wake Unit: %s\n\r' % data)
+
+################################################################################################################
+
+print ('\n\rWelcome to Wake acceptance testing!\n\r')
+
+ent = input('Connect micro USB cable to Wake Unit, then press ENTER\n\r')
+
+if ent =="":
+    comport = "COM3"
+else:
+    comport = "COM" + ent
+    print('com port is %s\n\r' %comport)
+
+ut = input("If the Wake status LED is blinking blue, press 1, then press ENTER\n\r\n\r" +
+            "If the Wake status LED is breathing cyan, press 2, then press ENTER\n\r"   +
+            "Press 3 to only upload WAV files via FTP (Wake status LED must be breathing cyan)")
+
+if ut == "1":
+    connectLuceraWifi()
+    programFirmwareDFU()
+    uploadWAV_FTP()
+    unitTest()
+
+elif ut == "2":
+    programFirmwareDFU()
+    uploadWAV_FTP()
+    unitTest()
+
+elif ut == "3":
+    uploadWAV_FTP()
