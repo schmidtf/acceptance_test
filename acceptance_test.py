@@ -1,16 +1,18 @@
+# Wake Accpetance Test
+# Version: 2.0
+# Date: 13 October 2016
 
 import subprocess
 import serial
 import ftplib
 import time
 import sys
+import textwrap
 
 username = "my_use$"
 passw  = "34FG98@S5^7#"
 
 filename = "1kHzseg.wav"
-
-num_filenames = 10
 
 filenames = [
 "0004.wav",
@@ -59,7 +61,7 @@ def connectLuceraWifi():
         d = serial.Serial(comport, baudrate=9600, timeout=3)
         print ('connected, entering WiFi credentials\n\r')
     except:
-        print ('serial connect FAIL - BAD')
+        print ('\n\rserial connect FAIL - BAD')
         sys.exit()
 
     d.write("i".encode())
@@ -114,9 +116,9 @@ def uploadWAV_FTP():
 
     try:
         s = serial.Serial(comport, baudrate=9600, timeout=20)
-        print ('Serial connection Good!')
+        print ('\n\rSerial connection Good!')
     except:
-        print ('Serial Connection FAIL - BAD')
+        print ('\n\rSerial Connection FAIL - BAD')
         sys.exit()
 
     print('starting Wake FTP server for file transfer to SD card\n\r')
@@ -145,7 +147,6 @@ def uploadWAV_FTP():
     #ftp.login(username, passw)
     ftp.set_debuglevel(2)
 
-    #for files in num_filenames:
     for files in range(len(filenames_short)):
         ftp.storbinary("STOR " + filenames_short[files], open(filenames_short[files], 'rb'))
         print ('\n\rUploaded file: %s\n\r' % filenames_short[files])
@@ -188,34 +189,32 @@ def unitTest():
 
 ################################################################################################################
 
-print ('\n\rWelcome to Wake acceptance testing!\n\r')
+print ('\n\rWelcome to Wake acceptance testing, Version 2.0!\n\r')
 
 ent = input('Connect micro USB cable to Wake Unit, then press ENTER\n\r')
 
 if ent =="":
     comport = "COM3"
+    print('serial com port is %s\n\r' %comport)
 else:
     comport = "COM" + ent
     print('com port is %s\n\r' %comport)
 
-ut = input("If the Wake status LED is blinking blue, press 1, then press ENTER\n\r\n\r" +
-            "If the Wake status LED is breathing cyan, press 2, then press ENTER\n\r\n\r"   +
-            "Press 3 to only upload WAV files via FTP (Wake status LED must be breathing cyan)\n\r\n\r" +
-            "Press 4 to run only acceptance unit test code - no firmware upload or WAV file upload\n\r\n\r")
+print("Acceptance Test Options: \n\r")
+print ("\tOption 1: If Wake unit does not have WiFi credentials and has not received firmware\n\r" +
+       "\t(status LED is blinking blue), then Press 1 to add WiFi credentials, upload firmware, and perform Unit Test\n\r\n\r" +
+       "\tOption 2: If the Wake unit is connected to WiFi and has firmware\n\r" +
+       "\t(status LED is breathing cyan), then Press 2 to perform Unit Test\n\r\n\r")
+
+ut = input("Press 1 for Option 1 or Press 2 for Option 2, then Press ENTER: ")
 
 if ut == "1":
     connectLuceraWifi()
     programFirmwareDFU()
-    uploadWAV_FTP()
     unitTest()
 
 elif ut == "2":
-    programFirmwareDFU()
-    uploadWAV_FTP()
     unitTest()
 
-elif ut == "3":
-    uploadWAV_FTP()
-
-elif ut == "4":
-    unitTest()
+elif ut == "":
+    print('\n\rInvalid Input\n\r')
