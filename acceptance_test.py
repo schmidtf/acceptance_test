@@ -133,7 +133,10 @@ def uploadWAV_FTP():
 
     lt = input("Enter the number(s) after the last period of the of IP Address: ")
 
-    ipaddr = "192.168.1." + lt
+    if (lt == "i"):
+        ipaddr = input("Enter IP: ")
+    else:
+        ipaddr = "192.168.1." + lt
 
     print ('writing WAV file to Wake SD card via FTP\n\r')
 
@@ -196,8 +199,9 @@ else:
     print('com port is %s\n\r' %comport)
 
 ut = input("If the Wake status LED is blinking blue, press 1, then press ENTER\n\r\n\r" +
-            "If the Wake status LED is breathing cyan, press 2, then press ENTER\n\r"   +
-            "Press 3 to only upload WAV files via FTP (Wake status LED must be breathing cyan)")
+            "If the Wake status LED is breathing cyan, press 2, then press ENTER\n\r\n\r"   +
+            "Press 3 to only upload WAV files via FTP (Wake status LED must be breathing cyan)\n\r\n\r" +
+            "Press 4 to run only acceptance unit test code - no firmware upload or WAV file upload\n\r\n\r")
 
 if ut == "1":
     connectLuceraWifi()
@@ -212,3 +216,6 @@ elif ut == "2":
 
 elif ut == "3":
     uploadWAV_FTP()
+
+elif ut == "4":
+    unitTest()
