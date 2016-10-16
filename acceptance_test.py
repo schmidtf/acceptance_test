@@ -165,11 +165,14 @@ def uploadWAV_FTP():
     print('Finished uploading WAV files to Wake Unit\n\r')
 
 def unitTest():
+
+    p = input('\n\rOnce the Wake Unit status LED is breathing cyan (connected to WiFi + Particle Clout), Press ENTER to begin Unit Test...')
+
     try:
         s = serial.Serial(comport, baudrate=9600, timeout=20)
         print ('Serial connection Good!\n\r')
     except:
-        print ('Serial Connection FAIL - BAD')
+        print ('Serial Connection FAIL - BAD, tried COM%s' % comport)
         sys.exit()
     print('plug in 9V power plug to Wake Unit...\n\r')
 
