@@ -9,6 +9,8 @@ import time
 import sys
 import textwrap
 
+VERSION = 2.3
+
 username = "my_use$"
 passw  = "34FG98@S5^7#"
 
@@ -55,7 +57,7 @@ filenames_short = [
 ]
 
 def connectLuceraWifi():
-    input('Ensure file "devs.txt" is closed -- Please press enter once "devs.text" is closed\n\r')
+    #input('Ensure file "devs.txt" is closed -- Please press enter once "devs.text" is closed\n\r')
 
     try:
         d = serial.Serial(comport, baudrate=9600, timeout=3)
@@ -77,17 +79,27 @@ def connectLuceraWifi():
     d.write("w".encode())
     #while(d.readline() != "SSID "):
     #    pass
+    print('entering wifi credentials 1...wait...')
     time.sleep(0.5)
-    #print 'readline: %s\n\r' % d.readline()
+    # clear read buffer
+    d.readline()
     d.write("LuceraLabs\r\n".encode())
+    print('entering wifi credentials 2...wait...')
     time.sleep(0.5)
-    #print 'readline: %s\n\r' % d.readline()
+    d.readline()
+    # enter 3 for WPA2
     d.write("3\r\n".encode())
+    print('entering wifi credentials 3...wait...')
     time.sleep(0.5)
+    red = d.readline()
+    if (red == "Security Cipher 1=AES, 2=TKIP, 3=AES+TKIP: "):
+        print('adding security type')
+        d.write("1\r\n".encode())
+        time.sleep(0.5)
     #print 'readline: %s\n\r' % d.readline()
     d.write("rick_james_bitch!\r\n".encode())
     print ('Wake should now connect to WiFi...wait for status LED to breath cyan...\n\r')
-    print ('if the status LED continues to blink green or blink cyan, hold CTRL, then press c, then put Wake Unit in the "Bad Wifi" bin')
+    print ('if the status LED returns to blinking blue, or continues to blink green or blink cyan, hold CTRL, then press c, then put Wake Unit in the "Bad Wifi" bin')
     d.close()
 
 def programFirmwareDFU():
@@ -112,7 +124,7 @@ def programFirmwareDFU():
 
 def uploadWAV_FTP():
 
-    p = input('\n\rOnce the Wake Unit status LED is breathing cyan (connected to WiFi + Particle Clout), Press ENTER to upload WAV files...')
+    p = input('\n\rOnce the Wake Unit status LED is breathing cyan (connected to WiFi + Particle Cloud), Press ENTER to upload WAV files...')
 
     try:
         s = serial.Serial(comport, baudrate=9600, timeout=20)
@@ -174,42 +186,48 @@ def unitTest():
     except:
         print ('Serial Connection FAIL - BAD, tried COM%s' % comport)
         sys.exit()
-    print('plug in 9V power plug to Wake Unit...\n\r')
-
-    lt = input("Once Wake Unit is plugged in to 9V power, press ENTER\n\r")
 
     # send command to beging unit test
     s.write('t'.encode())
 
     data = ""
 
-    while (data != "Unit Test Complete\r\n"):
+    while (1):
         while  s.in_waiting == 0:
             pass
         # convert to ascii string for comparison
         data = str(s.readline(),'ascii')
         print ('received data from Wake Unit: %s\n\r' % data)
 
+        if(data == "Unit Test Complete\r\n"):
+            sys.exit()
+
 ################################################################################################################
 
-print ('\n\rWelcome to Wake acceptance testing, Version 2.0!\n\r')
+print ('\n\rWelcome to Wake acceptance testing, Version %0.1f!\n\r' % VERSION)
+print
 
-ent = input('Connect micro USB cable to Wake Unit, then press ENTER\n\r')
+#ent = input('Connect micro USB cable to Wake Unit, then press ENTER\n\r')
 
-if ent =="":
-    comport = "COM3"
-    print('serial com port is %s\n\r' %comport)
-else:
-    comport = "COM" + ent
-    print('com port is %s\n\r' %comport)
+comport = "COM44"
 
+# if ent =="":
+#     comport = "COM3"
+#     print('serial com port is %s\n\r' %comport)
+# else:
+#     comport = "COM" + ent
+#     print('com port is %s\n\r' %comport)
+
+print("Ensure micro USB cable and 9V power cable are connected to Wake unit\n\r")
 print("Acceptance Test Options: \n\r")
 print ("\tOption 1: If Wake unit does not have WiFi credentials and has not received firmware\n\r" +
        "\t(status LED is blinking blue), then Press 1 to add WiFi credentials, upload firmware, and perform Unit Test\n\r\n\r" +
        "\tOption 2: If the Wake unit is connected to WiFi and has firmware\n\r" +
-       "\t(status LED is breathing cyan), then Press 2 to perform Unit Test\n\r\n\r")
+       "\t(status LED is breathing cyan), then Press 2 to perform Unit Test\n\r\n\r" +
+       "\tOption 3: If Wake unit has WiFi credentials and status LED blinked purple (cloud firmware upload)\n\r" +
+       "\t, then press 3 to perform DFU firmware programming and Unit Test\n\r\n\r")
 
-ut = input("Press 1 for Option 1 or Press 2 for Option 2, then Press ENTER: ")
+ut = input("Press 1, 2, or 3 for desired Option, then Press ENTER: ")
 
 if ut == "1":
     connectLuceraWifi()
@@ -217,6 +235,10 @@ if ut == "1":
     unitTest()
 
 elif ut == "2":
+    unitTest()
+
+elif ut == "3":
+    programFirmwareDFU()
     unitTest()
 
 elif ut == "":
